@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survival Game</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            background-color: #282c34;
+            color: white;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            background-color: black;
+            margin: 20px auto;
+            overflow: hidden;
+            border: 3px solid white;
+            touch-action: none;
+        }
+
+        .player {
+            width: 20px;
+            height: 20px;
+            background-color: cyan;
+            position: absolute;
+            top: 190px;
+            left: 190px;
+            border-radius: 50%;
+        }
+
+        .obstacle {
+            width: 20px;
+            height: 20px;
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        .fast-obstacle {
+            background-color: yellow;
+        }
+
+        .normal-obstacle {
+            background-color: red;
+        }
+
+        .bouncing-obstacle {
+            background-color: purple;
+        }
+
+        #gameOver {
+            display: none;
+            font-size: 24px;
+            color: red;
+            margin-top: 20px;
+        }
+
+        #scoreboard {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
+        #restartButton {
+            display: none;
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: white;
+            color: black;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Survival Game</h1>
+    <p>Use <b>WASD</b> to move (or Drag on mobile)</p>
+    <div id="scoreboard">Score: <span id="score">0</span> | Max Score: <span id="maxScore">0</span></div>
+
+    <div id="gameContainer">
+        <div class="player" id="player"></div>
+    </div>
+
+    <h2 id="gameOver">Game Over!</h2>
+    <center>
+        <button id="restartButton" onclick="restartGame()">Restart</button>
+    </center>
+
+    <script>
+        const gameContainer = document.getElementById("gameContainer");
+        const player = document.getElementById("player");
+        const gameOverText = document.getElementById("gameOver");
+        const scoreDisplay = document.getElementById("score");
+        const maxScoreDisplay = document.getElementById("maxScore");
+        const restartButton = document.getElementById("restartButton");
+
+        let playerX = 190, playerY = 190;
+        let velX = 0, velY = 0;
+        const speed = 2.5;
+        let keys = {};
+        let gameOver = false;
+        let obstacleCount = 1;
+        let minSpawnTime = 800;
+        let maxSpawnTime = 2000;
+        let score = 0;
+        let maxScore = localStorage.getItem("maxScore") || 0;
+        maxScoreDisplay.textContent = maxScore;
+
+        document.addEventListener("keydown", (e) => keys[e.key] = true);
+        document.addEventListener("keyup", (e) => keys[e.key] = false);
+
+        function updatePlayer() {
+            if (gameOver) return;
+            velX = (keys["d"] ? speed : 0) - (keys["a"] ? speed : 0);
+            velY = (keys["s"] ? speed : 0) - (keys["w"] ? speed : 0);
+            playerX = Math.min(380, Math.max(0, playerX + velX));
+            playerY = Math.min(380, Math.max(0, playerY + velY));
+            player.style.left = playerX + "px";
+            player.style.top = playerY + "px";
+            requestAnimationFrame(updatePlayer);
+        }
+        updatePlayer();
+
+        player.addEventListener("touchstart", (e) => {
+            isDragging = true;
+            const touch = e.touches[0];
+            offsetX = touch.clientX - player.offsetLeft;
+            offsetY = touch.clientY - player.offsetTop;
+        });
+
+        document.addEventListener("touchmove", (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            playerX = Math.min(380, Math.max(0, touch.clientX - offsetX));
+            playerY = Math.min(380, Math.max(0, touch.clientY - offsetY));
+            player.style.left = playerX + "px";
+            player.style.top = playerY + "px";
+        });
+
+        document.addEventListener("touchend", () => {
+            isDragging = false;
+        });
+
+        function updateScore(points) {
+            score += points;
+            scoreDisplay.textContent = score;
+            increaseDifficulty();
+        }
+
+        function increaseDifficulty() {
+            if (score % 8 === 0) {
+                obstacleCount++;
+                minSpawnTime = Math.max(400, minSpawnTime - 50);
+                maxSpawnTime = Math.max(1000, maxSpawnTime - 100);
+            }
+        }
+
+        function endGame() {
+            gameOver = true;
+            gameOverText.style.display = "block";
+            restartButton.style.display = "block";
+            if (score > maxScore) {
+                maxScore = score;
+                localStorage.setItem("maxScore", maxScore);
+                maxScoreDisplay.textContent = maxScore;
+            }
+        }
+
+        function restartGame() {
+            location.reload();
+        }
+
+        function moveObstacle(obstacle, x, y, speedMultiplier) {
+            let dx = playerX - x;
+            let dy = playerY - y;
+            let length = Math.sqrt(dx * dx + dy * dy);
+            let speedX = (dx / length) * speedMultiplier;
+            let speedY = (dy / length) * speedMultiplier;
+
+            function updateObstacle() {
+                if (gameOver) {
+                    obstacle.remove();
+                    return;
+                }
+                x += speedX;
+                y += speedY;
+                obstacle.style.left = x + "px";
+                obstacle.style.top = y + "px";
+                if (x < -20 || x > 420 || y < -20 || y > 420) {
+                    let points = 0;
+                    if (obstacle.classList.contains("normal-obstacle")) {
+                        points = 1; // Red obstacle
+                    } else if (obstacle.classList.contains("fast-obstacle")) {
+                        points = 2; // Yellow obstacle
+                    } else if (obstacle.classList.contains("bouncing-obstacle")) {
+                        points = 3; // Purple obstacle
+                    }
+                    updateScore(points);
+                    obstacle.remove();
+                    return;
+                }
+
+                if (x < playerX + 20 && x + 20 > playerX && y < playerY + 20 && y + 20 > playerY) {
+                    endGame();
+                } else {
+                    requestAnimationFrame(updateObstacle);
+                }
+            }
+            updateObstacle();
+        }
+        function moveBouncingObstacle(obstacle, x, y, speedX, speedY) {
+    let bounceCount = 0;
+    function updateBouncing() {
+        if (gameOver) {
+            obstacle.remove();
+            return;
+        }
+
+        if (bounceCount >= 2) {
+            // After 2 bounces, move in a straight line
+            speedX = speedX > 0 ? 2 : -2;
+            speedY = speedY > 0 ? 2 : -2;
+        }
+        x += speedX;
+        y += speedY;
+
+        // Bounce off walls exactly twice
+        if ((x <= 0 || x >= 380) && bounceCount < 2) {
+            speedX *= -1;
+            bounceCount++;
+        }
+        if ((y <= 0 || y >= 380) && bounceCount < 2) {
+            speedY *= -1;
+            bounceCount++;
+        }
+
+        obstacle.style.left = x + "px";
+        obstacle.style.top = y + "px";
+
+        // 🔥 **Collision Check**
+        if (x < playerX + 20 && x + 20 > playerX && y < playerY + 20 && y + 20 > playerY) {
+            endGame();
+            return;
+        }
+
+        requestAnimationFrame(updateBouncing);
+    }
+    updateBouncing();
+}
+
+        function createObstacle() {
+            if (gameOver) return;
+
+            for (let i = 0; i < obstacleCount; i++) {
+                setTimeout(() => {
+                    const obstacle = document.createElement("div");
+                    let obstacleType = Math.random();
+
+                    let x, y;
+                    let side = Math.floor(Math.random() * 4); // 0 = Top, 1 = Bottom, 2 = Left, 3 = Right
+
+                    if (side === 0) {        // Top edge
+                        x = Math.random() * 380;
+                        y = 0;
+                    } else if (side === 1) { // Bottom edge
+                        x = Math.random() * 380;
+                        y = 380;
+                    } else if (side === 2) { // Left edge
+                        x = 0;
+                        y = Math.random() * 380;
+                    } else {                 // Right edge
+                        x = 380;
+                        y = Math.random() * 380;
+                    }
+
+                    obstacle.style.left = x + "px";
+                    obstacle.style.top = y + "px";
+
+                    if (obstacleType < 0.6) {
+                        obstacle.classList.add("obstacle", "normal-obstacle");
+                        moveObstacle(obstacle, x, y, 1.5); // Normal speed
+                    } else if (obstacleType < 0.8) {
+                        obstacle.classList.add("obstacle", "fast-obstacle");
+                        moveObstacle(obstacle, x, y, 3); // Faster speed
+                    } else {
+                        obstacle.classList.add("obstacle", "bouncing-obstacle");
+                        let speedX = Math.random() > 0.5 ? 2 : -2;
+                        let speedY = Math.random() > 0.5 ? 2 : -2;
+                        moveBouncingObstacle(obstacle, x, y, speedX, speedY);
+                    }
+
+                    gameContainer.appendChild(obstacle);
+                }, i * 200);
+            }
+
+            setTimeout(createObstacle, Math.random() * (maxSpawnTime - minSpawnTime) + minSpawnTime);
+        } createObstacle();
+    </script>
+
+</body>
+
+</html>
