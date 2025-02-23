@@ -59,13 +59,13 @@ A fun and challenging survival game where you must dodge obstacles to keep the p
 1. Clone the repository:
 
     ```sh
-    git clone [https://github.com/your-username/your-repo-name.git](https://github.com/Tanaynaik07/Dodge-zone.git)
+    git clone https://github.com/Tanaynaik07/Dodge-zone.git
     ```
 
 2. Navigate to the project directory:
 
     ```sh
-    cd [your-repo-name](https://github.com/Tanaynaik07/Dodge-zone.git)
+    cd https://github.com/Tanaynaik07/Dodge-zone.git
     ```
 
 3. Open the `index.html` file in your preferred browser.
@@ -82,7 +82,7 @@ A fun and challenging survival game where you must dodge obstacles to keep the p
 
 ## 🌐 Live Demo
 
-You can play the game [[here](#)](https://dodge-zone.vercel.app/). (Add your live link once deployed)
+You can play the game (https://dodge-zone.vercel.app/). (Add your live link once deployed)
 
 ---
 
@@ -110,7 +110,7 @@ Contributions are welcome! Feel free to submit a pull request or open an issue f
 
 ## 📧 Contact
 
-For any inquiries or feedback, please contact me at [your-tanaynaik0710@gmail.com](mailto:tanaynaik0710@gmail.com).
+For any inquiries or feedback, please contact me at [tanaynaik0710@gmail.com](tanaynaik0710@gmail.com).
 
 ---
 
